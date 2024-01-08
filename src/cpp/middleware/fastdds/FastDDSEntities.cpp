@@ -154,20 +154,35 @@ static void set_qos_from_xrce_object(
 }
 
 static void set_qos_from_xrce_object(
-        fastdds::dds::PublisherQos& /* qos */,
-        const dds::xrce::OBJK_Publisher_Binary& /* publisher_xrce */)
+        fastdds::dds::PublisherQos& qos/* qos */,
+        const dds::xrce::OBJK_Publisher_Binary& publisher_xrce/* publisher_xrce */)
 {
     // TODO copy group_data
     // TODO copy partition
+    PartitionQosPolicy partition;
+    if(publisher_xrce.has_qos())
+    {
+        std::vector<std::string> tmp = publisher_xrce.qos().partitions();
+        partition.setNames(tmp);
+        qos.partition() = partition;
+    }
+     //attr.qos.m_partition;
     return;
 }
 
 static void set_qos_from_xrce_object(
-        fastdds::dds::SubscriberQos& /* qos */,
-        const dds::xrce::OBJK_Subscriber_Binary& /* subscriber_xrce */)
+        fastdds::dds::SubscriberQos& qos/* qos */,
+        const dds::xrce::OBJK_Subscriber_Binary& subscriber_xrce/* subscriber_xrce */)
 {
     // TODO copy group_data
     // TODO copy partition
+    PartitionQosPolicy partition;
+    if(subscriber_xrce.has_qos())
+    {
+        std::vector<std::string> tmp = subscriber_xrce.qos().partitions();
+        partition.setNames(tmp);
+        qos.partition() = partition;
+    }
     return;
 }
 

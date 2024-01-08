@@ -247,9 +247,16 @@ bool FastDDSMiddleware::create_topic_by_bin(
     auto it_participant = participants_.find(participant_id);
     if (participants_.end() != it_participant)
     {
+        //by ld
+        rtps::TopicKind_t kind;
+        if(topic_xrce.type_identifier().compare("WITH_KEY")==0)
+            kind = rtps::WITH_KEY;
+        else
+            kind = rtps::NO_KEY;
         fastrtps::TopicAttributes attrs(
             topic_xrce.topic_name().c_str(),
-            topic_xrce.type_name().c_str()
+            topic_xrce.type_name().c_str(),
+            kind
         );
         std::shared_ptr<FastDDSTopic> topic = create_topic(it_participant->second, attrs);
         rv = topic && topics_.emplace(topic_id, std::move(topic)).second;
