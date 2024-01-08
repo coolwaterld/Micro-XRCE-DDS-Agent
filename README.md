@@ -7,10 +7,87 @@
 [![Stars](https://img.shields.io/github/stars/eProsima/Micro-XRCE-DDS-Agent.svg)](https://github.com/eProsima/Micro-XRCE-DDS-Agent/stargazers)
 [![Read the Docs](https://img.shields.io/readthedocs/micro-xrce-dds?style=flat)](https://micro-xrce-dds.docs.eprosima.com/en/latest/)
 [![Twitter Follow](https://img.shields.io/twitter/follow/eprosima?style=social)](https://twitter.com/EProsima)
-
 [![Docker Build Status](https://img.shields.io/docker/cloud/build/eprosima/micro-xrce-dds-agent)](https://hub.docker.com/r/eprosima/micro-xrce-dds-agent/)
 
+Work with https://github.com/coolwaterld/Micro-XRCE-DDS-Client
+
+## Quick Start
+
+mkdir build
+
+cd build
+
+cmake ..
+
+make
+
+./MicroXRCEAgent udp4 -p 2018
+
+## What chaged
+
+Support partition:   src/cpp/middleware/fastdds/FastDDSEntities.cpp
+```
+ static void set_qos_from_xrce_object(
+-        fastdds::dds::PublisherQos& /* qos */,
+-        const dds::xrce::OBJK_Publisher_Binary& /* publisher_xrce */)
++        fastdds::dds::PublisherQos& qos/* qos */,
++        const dds::xrce::OBJK_Publisher_Binary& publisher_xrce/* publisher_xrce */)
+ {
+     // TODO copy group_data
+     // TODO copy partition
++    PartitionQosPolicy partition;
++    if(publisher_xrce.has_qos())
++    {
++        std::vector<std::string> tmp = publisher_xrce.qos().partitions();
++        partition.setNames(tmp);
++        qos.partition() = partition;
++    }
++     //attr.qos.m_partition;
+     return;
+ }
+ 
+ static void set_qos_from_xrce_object(
+-        fastdds::dds::SubscriberQos& /* qos */,
+-        const dds::xrce::OBJK_Subscriber_Binary& /* subscriber_xrce */)
++        fastdds::dds::SubscriberQos& qos/* qos */,
++        const dds::xrce::OBJK_Subscriber_Binary& subscriber_xrce/* subscriber_xrce */)
+ {
+     // TODO copy group_data
+     // TODO copy partition
++    PartitionQosPolicy partition;
++    if(subscriber_xrce.has_qos())
++    {
++        std::vector<std::string> tmp = subscriber_xrce.qos().partitions();
++        partition.setNames(tmp);
++        qos.partition() = partition;
++    }
+     return;
+ }
+```
+Support @key:   src/cpp/middleware/fastdds/FastDDSMiddleware.cpp
+```
+@@ -247,9 +247,16 @@ bool FastDDSMiddleware::create_topic_by_bin(
+     auto it_participant = participants_.find(participant_id);
+     if (participants_.end() != it_participant)
+     {
++        //by ld
++        rtps::TopicKind_t kind;
++        if(topic_xrce.type_identifier().compare("WITH_KEY")==0)
++            kind = rtps::WITH_KEY;
++        else
++            kind = rtps::NO_KEY;
+         fastrtps::TopicAttributes attrs(
+             topic_xrce.topic_name().c_str(),
+-            topic_xrce.type_name().c_str()
++            topic_xrce.type_name().c_str(),
++            kind
+         );
+         std::shared_ptr<FastDDSTopic> topic = create_topic(it_participant->second, attrs);
+         rv = topic && topics_.emplace(topic_id, std::move(topic)).second;
+```
+
 <a href="http://www.eprosima.com"><img src="https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcSd0PDlVz1U_7MgdTe0FRIWD0Jc9_YH-gGi0ZpLkr-qgCI6ZEoJZ5GBqQ" align="left" hspace="8" vspace="2" width="100" height="100" ></a>
+
 
 *eProsima Micro XRCE-DDS* is a library implementing the [DDS-XRCE protocol](https://www.omg.org/spec/DDS-XRCE/About-DDS-XRCE/) as defined and maintained by the OMG, whose aim is to allow resource constrained devices such as microcontrollers to communicate with the [DDS](https://www.omg.org/spec/DDS/About-DDS/) world as any other DDS actor would do.
 It follows a client/server paradigm and is composed by two libraries, the *Micro XRCE-DDS Client* and the *Micro XRCE-DDS Agent*. The *Micro XRCE-DDS Clients* are lightweight entities meant to be compiled on e**X**tremely **R**esource **C**onstrained **E**nvironments, while the *Micro XRCE-DDS Agent* is a broker which bridges the *Clients* with the DDS world.
